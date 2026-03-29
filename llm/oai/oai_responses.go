@@ -401,9 +401,14 @@ func (s *ResponsesService) Do(ctx context.Context, ir *llm.Request) (*llm.Respon
 		MaxOutputTokens: cmp.Or(s.MaxTokens, DefaultMaxTokens),
 	}
 
-	// Add reasoning if thinking is enabled
-	if s.ThinkingLevel != llm.ThinkingLevelOff {
-		effort := s.ThinkingLevel.ThinkingEffort()
+	// Add reasoning if thinking is enabled.
+	// Per-request ThinkingLevel override takes precedence over the service default.
+	thinkingLevel := s.ThinkingLevel
+	if ir.ThinkingLevel != nil {
+		thinkingLevel = *ir.ThinkingLevel
+	}
+	if thinkingLevel != llm.ThinkingLevelOff {
+		effort := thinkingLevel.ThinkingEffort()
 		if effort != "" {
 			req.Reasoning = &responsesReasoning{Effort: effort}
 		}

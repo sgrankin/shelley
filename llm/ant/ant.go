@@ -508,15 +508,20 @@ func (s *Service) fromLLMRequest(r *llm.Request) *request {
 		System:     mapped(r.System, fromLLMSystem),
 	}
 
-	// Enable extended thinking if a thinking level is set
-	if s.ThinkingLevel != llm.ThinkingLevelOff {
+	// Enable extended thinking if a thinking level is set.
+	// Per-request ThinkingLevel override takes precedence over the service default.
+	thinkingLevel := s.ThinkingLevel
+	if r.ThinkingLevel != nil {
+		thinkingLevel = *r.ThinkingLevel
+	}
+	if thinkingLevel != llm.ThinkingLevelOff {
 		if useAdaptiveThinking(model) {
 			// Opus 4.7+: adaptive thinking with effort level
 			req.Thinking = &thinking{Type: "adaptive"}
-			req.OutputConfig = &outputConfig{Effort: s.ThinkingLevel.ThinkingEffort()}
+			req.OutputConfig = &outputConfig{Effort: thinkingLevel.ThinkingEffort()}
 		} else {
 			// Legacy: manual thinking with budget_tokens
-			budget := s.ThinkingLevel.ThinkingBudgetTokens()
+			budget := thinkingLevel.ThinkingBudgetTokens()
 			// Ensure max_tokens > budget_tokens as required by Anthropic API
 			if maxTokens <= budget {
 				req.MaxTokens = budget + 1024
@@ -562,12 +567,16 @@ func (s *Service) fromLLMRequestStrippingAllThinking(r *llm.Request) *request {
 		System:     mapped(r.System, fromLLMSystem),
 	}
 
-	if s.ThinkingLevel != llm.ThinkingLevelOff {
+	thinkingLevel := s.ThinkingLevel
+	if r.ThinkingLevel != nil {
+		thinkingLevel = *r.ThinkingLevel
+	}
+	if thinkingLevel != llm.ThinkingLevelOff {
 		if useAdaptiveThinking(model) {
 			req.Thinking = &thinking{Type: "adaptive"}
-			req.OutputConfig = &outputConfig{Effort: s.ThinkingLevel.ThinkingEffort()}
+			req.OutputConfig = &outputConfig{Effort: thinkingLevel.ThinkingEffort()}
 		} else {
-			budget := s.ThinkingLevel.ThinkingBudgetTokens()
+			budget := thinkingLevel.ThinkingBudgetTokens()
 			if maxTokens <= budget {
 				req.MaxTokens = budget + 1024
 			}

@@ -782,7 +782,7 @@ func (s *Server) handleChatConversation(w http.ResponseWriter, r *http.Request, 
 	if firstMessage {
 		ctxNoCancel := context.WithoutCancel(ctx)
 		go func() {
-			slugCtx, cancel := context.WithTimeout(ctxNoCancel, 15*time.Second)
+			slugCtx, cancel := context.WithTimeout(ctxNoCancel, 90*time.Second)
 			defer cancel()
 			_, err := slug.GenerateSlug(slugCtx, s.llmManager, s.db, s.logger, conversationID, req.Message, modelID)
 			if err != nil {
@@ -930,7 +930,7 @@ func (s *Server) handleNewConversation(w http.ResponseWriter, r *http.Request) {
 	if firstMessage {
 		ctxNoCancel := context.WithoutCancel(ctx)
 		go func() {
-			slugCtx, cancel := context.WithTimeout(ctxNoCancel, 15*time.Second)
+			slugCtx, cancel := context.WithTimeout(ctxNoCancel, 90*time.Second)
 			defer cancel()
 			_, err := slug.GenerateSlug(slugCtx, s.llmManager, s.db, s.logger, conversationID, req.Message, modelID)
 			if err != nil {

@@ -87,6 +87,10 @@ type Request struct {
 	// OnStream is called with each streaming delta as the LLM generates content.
 	// If nil, no streaming callbacks are made. The full response is still returned from Do.
 	OnStream func(StreamDelta) `json:"-"`
+
+	// ThinkingLevel overrides the service's thinking level for this request.
+	// Nil means use the service default.
+	ThinkingLevel *ThinkingLevel
 }
 
 // Message represents a message in the conversation.

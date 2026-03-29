@@ -137,11 +137,13 @@ Respond with only the slug, nothing else.`, userMessage)
 		},
 	}
 
+	minimal := llm.ThinkingLevelMinimal
 	request := &llm.Request{
-		Messages: []llm.Message{message},
+		Messages:      []llm.Message{message},
+		ThinkingLevel: &minimal,
 	}
 
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
 	response, err := llmService.Do(ctxWithTimeout, request)
@@ -153,7 +155,15 @@ Respond with only the slug, nothing else.`, userMessage)
 		return "", fmt.Errorf("empty response from LLM")
 	}
 
-	slug := strings.TrimSpace(response.Content[0].Text)
+	// Find the first text content block (skip thinking blocks)
+	var rawSlug string
+	for _, c := range response.Content {
+		if c.Type == llm.ContentTypeText && c.Text != "" {
+			rawSlug = c.Text
+			break
+		}
+	}
+	slug := strings.TrimSpace(rawSlug)
 	slug = Sanitize(slug)
 	if slug == "" {
 		return "", fmt.Errorf("generated slug is empty after sanitization")

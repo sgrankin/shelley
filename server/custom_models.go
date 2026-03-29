@@ -383,9 +383,10 @@ func (s *Server) handleTestModel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Send a simple test request
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
 	defer cancel()
 
+	minimal := llm.ThinkingLevelMinimal
 	request := &llm.Request{
 		Messages: []llm.Message{
 			{
@@ -395,6 +396,7 @@ func (s *Server) handleTestModel(w http.ResponseWriter, r *http.Request) {
 				},
 			},
 		},
+		ThinkingLevel: &minimal,
 	}
 
 	response, err := service.Do(ctx, request)
