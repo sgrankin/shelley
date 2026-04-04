@@ -55,6 +55,9 @@ func (p *oneShotMockProvider) GetAvailableModels() []string {
 	return models
 }
 
+func (p *oneShotMockProvider) GetModelTags(modelID string) string { return "" }
+func (p *oneShotMockProvider) GetModelDisplayName(modelID string) string { return "" }
+
 func TestLLMOneShotShortResult(t *testing.T) {
 	dir := t.TempDir()
 	os.WriteFile(filepath.Join(dir, "prompt.txt"), []byte("What is 2+2?"), 0o644)

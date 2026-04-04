@@ -36,6 +36,9 @@ func (m *mockLLMProvider) GetAvailableModels() []string {
 	return []string{"test-model"}
 }
 
+func (m *mockLLMProvider) GetModelTags(modelID string) string { return "" }
+func (m *mockLLMProvider) GetModelDisplayName(modelID string) string { return "" }
+
 func TestNewKeywordTool(t *testing.T) {
 	provider := &mockLLMProvider{}
 	tool := NewKeywordTool(provider)

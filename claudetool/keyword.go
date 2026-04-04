@@ -17,6 +17,10 @@ import (
 type LLMServiceProvider interface {
 	GetService(modelID string) (llm.Service, error)
 	GetAvailableModels() []string
+	// GetModelDisplayName returns the display name for a model, or "" if unknown.
+	GetModelDisplayName(modelID string) string
+	// GetModelTags returns comma-separated tags for a model, or "" if unknown.
+	GetModelTags(modelID string) string
 }
 
 // KeywordTool provides keyword search functionality

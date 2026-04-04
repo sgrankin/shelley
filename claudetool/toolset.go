@@ -171,7 +171,11 @@ func NewOrchestratorToolSet(ctx context.Context, cfg OrchestratorToolSetConfig) 
 	availableModels := cfg.AvailableModels
 	if availableModels == nil && cfg.LLMProvider != nil {
 		for _, id := range cfg.LLMProvider.GetAvailableModels() {
-			availableModels = append(availableModels, AvailableModel{ID: id})
+			am := AvailableModel{ID: id, Tags: cfg.LLMProvider.GetModelTags(id)}
+			if dn := cfg.LLMProvider.GetModelDisplayName(id); dn != "" && dn != id {
+				am.DisplayName = dn
+			}
+			availableModels = append(availableModels, am)
 		}
 	}
 
@@ -275,7 +279,11 @@ func NewToolSet(ctx context.Context, cfg ToolSetConfig) *ToolSet {
 	availableModels := cfg.AvailableModels
 	if availableModels == nil && cfg.LLMProvider != nil {
 		for _, id := range cfg.LLMProvider.GetAvailableModels() {
-			availableModels = append(availableModels, AvailableModel{ID: id})
+			am := AvailableModel{ID: id, Tags: cfg.LLMProvider.GetModelTags(id)}
+			if dn := cfg.LLMProvider.GetModelDisplayName(id); dn != "" && dn != id {
+				am.DisplayName = dn
+			}
+			availableModels = append(availableModels, am)
 		}
 	}
 

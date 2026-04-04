@@ -782,6 +782,28 @@ type ModelInfo struct {
 	Source      string // Human-readable source (e.g., "exe.dev gateway", "$ANTHROPIC_API_KEY", "custom")
 }
 
+// GetModelDisplayName returns the display name for a model, or "" if unknown.
+func (m *Manager) GetModelDisplayName(modelID string) string {
+	m.mu.RLock()
+	entry, ok := m.services[modelID]
+	m.mu.RUnlock()
+	if !ok {
+		return ""
+	}
+	return entry.displayName
+}
+
+// GetModelTags returns comma-separated tags for a model, or "" if unknown.
+func (m *Manager) GetModelTags(modelID string) string {
+	m.mu.RLock()
+	entry, ok := m.services[modelID]
+	m.mu.RUnlock()
+	if !ok {
+		return ""
+	}
+	return entry.tags
+}
+
 // GetModelInfo returns the display name, tags, and source for a model
 func (m *Manager) GetModelInfo(modelID string) *ModelInfo {
 	m.mu.RLock()

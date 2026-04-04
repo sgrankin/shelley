@@ -39,11 +39,14 @@ Short results are returned inline; long results are written to a file.`
 	if len(t.AvailableModels) > 0 {
 		base += "\n\nAvailable models (use the \"model\" parameter to override the default):"
 		for _, m := range t.AvailableModels {
+			line := m.ID
 			if m.DisplayName != "" && m.DisplayName != m.ID {
-				base += fmt.Sprintf("\n- %s (%s)", m.ID, m.DisplayName)
-			} else {
-				base += fmt.Sprintf("\n- %s", m.ID)
+				line = fmt.Sprintf("%s (%s)", m.ID, m.DisplayName)
 			}
+			if m.Tags != "" {
+				line = fmt.Sprintf("%s [%s]", line, m.Tags)
+			}
+			base += "\n- " + line
 		}
 	}
 

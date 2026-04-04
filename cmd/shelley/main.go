@@ -316,22 +316,13 @@ func setupToolSetConfig(llmProvider claudetool.LLMServiceProvider, llmManager se
 		wd = "/"
 	}
 
-	// Build available models with display names for the subagent tool
-	var availableModels []claudetool.AvailableModel
-	for _, id := range llmManager.GetAvailableModels() {
-		am := claudetool.AvailableModel{ID: id}
-		if info := llmManager.GetModelInfo(id); info != nil && info.DisplayName != "" && info.DisplayName != id {
-			am.DisplayName = info.DisplayName
-		}
-		availableModels = append(availableModels, am)
-	}
-
+	// AvailableModels is left nil so each conversation builds the list
+	// dynamically from LLMProvider, picking up tag/model changes without restart.
 	return claudetool.ToolSetConfig{
 		WorkingDir:       wd,
 		LLMProvider:      llmProvider,
 		EnableJITInstall: claudetool.EnableBashToolJITInstall,
 		EnableBrowser:    true,
-		AvailableModels:  availableModels,
 	}
 }
 

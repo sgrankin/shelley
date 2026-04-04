@@ -544,6 +544,9 @@ func (t *testLLMProvider) GetAvailableModels() []string {
 	return t.models
 }
 
+func (t *testLLMProvider) GetModelTags(modelID string) string { return "" }
+func (t *testLLMProvider) GetModelDisplayName(modelID string) string { return "" }
+
 func TestInsertMissingToolResults(t *testing.T) {
 	tests := []struct {
 		name     string

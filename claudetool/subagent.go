@@ -24,6 +24,7 @@ type SubagentRunner interface {
 type AvailableModel struct {
 	ID          string // The model identifier to pass as the "model" parameter
 	DisplayName string // Human-readable name (may equal ID)
+	Tags        string // Comma-separated tags describing capabilities (e.g., "fast,vision")
 }
 
 // SubagentDB is the database interface for subagent operations.
@@ -69,11 +70,14 @@ beyond what you put in the prompt, so share the "why" alongside the "what".`
 	if len(s.AvailableModels) > 0 {
 		base += "\n\nAvailable models (use the \"model\" parameter to override the default):"
 		for _, m := range s.AvailableModels {
+			line := m.ID
 			if m.DisplayName != "" && m.DisplayName != m.ID {
-				base += fmt.Sprintf("\n- %s (%s)", m.ID, m.DisplayName)
-			} else {
-				base += fmt.Sprintf("\n- %s", m.ID)
+				line = fmt.Sprintf("%s (%s)", m.ID, m.DisplayName)
 			}
+			if m.Tags != "" {
+				line = fmt.Sprintf("%s [%s]", line, m.Tags)
+			}
+			base += "\n- " + line
 		}
 	}
 

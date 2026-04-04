@@ -556,6 +556,9 @@ func (m *claudeLLMManager) RefreshCustomModels() error {
 	return nil
 }
 
+func (m *claudeLLMManager) GetModelTags(modelID string) string { return "" }
+func (m *claudeLLMManager) GetModelDisplayName(modelID string) string { return "" }
+
 // TestClaudeCancelDuringToolCall tests cancellation during tool execution with Claude
 func TestClaudeCancelDuringToolCall(t *testing.T) {
 	t.Parallel()

@@ -85,6 +85,8 @@ type StreamResponse struct {
 type LLMProvider interface {
 	GetService(modelID string) (llm.Service, error)
 	GetAvailableModels() []string
+	GetModelDisplayName(modelID string) string
+	GetModelTags(modelID string) string
 	HasModel(modelID string) bool
 	GetModelInfo(modelID string) *models.ModelInfo
 	RefreshCustomModels() error

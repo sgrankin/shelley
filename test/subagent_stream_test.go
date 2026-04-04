@@ -68,6 +68,9 @@ func (m *fakeLLMManager) RefreshCustomModels() error {
 	return nil
 }
 
+func (m *fakeLLMManager) GetModelTags(modelID string) string { return "" }
+func (m *fakeLLMManager) GetModelDisplayName(modelID string) string { return "" }
+
 // recordingChannel is a notifications.Channel that records all events sent to it.
 type recordingChannel struct {
 	mu     sync.Mutex

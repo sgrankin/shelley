@@ -920,6 +920,9 @@ func (m *inspectableLLMManager) RefreshCustomModels() error {
 	return nil
 }
 
+func (m *inspectableLLMManager) GetModelTags(modelID string) string { return "" }
+func (m *inspectableLLMManager) GetModelDisplayName(modelID string) string { return "" }
+
 func TestVersionEndpoint(t *testing.T) {
 	// Create temp DB-backed server
 	ctx := context.Background()

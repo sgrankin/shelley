@@ -407,3 +407,6 @@ func (m *testLLMManager) GetModelInfo(modelID string) *models.ModelInfo {
 func (m *testLLMManager) RefreshCustomModels() error {
 	return nil
 }
+
+func (m *testLLMManager) GetModelTags(modelID string) string { return "" }
+func (m *testLLMManager) GetModelDisplayName(modelID string) string { return "" }
