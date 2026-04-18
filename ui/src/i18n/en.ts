@@ -132,6 +132,9 @@ export const en: TranslationKeys = {
   tagsPlaceholder: "comma-separated, e.g., slug, cheap",
   tagsTooltip:
     'Comma-separated tags for this model. Use "slug" to mark this model for generating conversation titles. If no model has the "slug" tag, the conversation\'s model will be used.',
+  preserveThinking: "Preserve thinking across turns",
+  preserveThinkingHint:
+    "Round-trips historical reasoning/thinking blocks so the model keeps its prior chain of thought. Costs context tokens; safe to leave on for servers that ignore it.",
   testButton: "Test",
   testingButton: "Testing...",
   save: "Save",

@@ -61,6 +61,7 @@ interface FormData {
   model_name: string;
   max_tokens: number;
   tags: string; // Comma-separated tags
+  preserve_thinking: boolean;
 }
 
 const emptyForm: FormData = {
@@ -72,6 +73,7 @@ const emptyForm: FormData = {
   model_name: "",
   max_tokens: 200000,
   tags: "",
+  preserve_thinking: false,
 };
 
 function ModelsModal({ isOpen, onClose, onModelsChanged }: ModelsModalProps) {
@@ -165,6 +167,7 @@ function ModelsModal({ isOpen, onClose, onModelsChanged }: ModelsModalProps) {
         endpoint: form.endpoint,
         api_key: form.api_key,
         model_name: form.model_name,
+        preserve_thinking: form.preserve_thinking,
       };
       const result = await customModelsApi.testCustomModel(request);
       setTestResult(result);
@@ -194,6 +197,7 @@ function ModelsModal({ isOpen, onClose, onModelsChanged }: ModelsModalProps) {
         model_name: form.model_name,
         max_tokens: form.max_tokens,
         tags: form.tags,
+        preserve_thinking: form.preserve_thinking,
       };
 
       if (editingModelId) {
@@ -224,6 +228,7 @@ function ModelsModal({ isOpen, onClose, onModelsChanged }: ModelsModalProps) {
       model_name: model.model_name,
       max_tokens: model.max_tokens,
       tags: model.tags,
+      preserve_thinking: model.preserve_thinking,
     });
     setShowForm(true);
     setTestResult(null);
@@ -450,6 +455,21 @@ function ModelsModal({ isOpen, onClose, onModelsChanged }: ModelsModalProps) {
                 placeholder={t("tagsPlaceholder")}
                 className="form-input"
               />
+            </div>
+
+            {/* Preserve Thinking */}
+            <div className="form-group">
+              <label className="form-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={form.preserve_thinking}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, preserve_thinking: e.target.checked }))
+                  }
+                />
+                <span>{t("preserveThinking")}</span>
+              </label>
+              <div className="form-hint">{t("preserveThinkingHint")}</div>
             </div>
 
             {/* Test Result */}

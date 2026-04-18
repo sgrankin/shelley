@@ -132,6 +132,9 @@ export const zhCN: TranslationKeys = {
   tagsPlaceholder: "逗号分隔，例如：slug, cheap",
   tagsTooltip:
     '此模型的逗号分隔标签。使用 "slug" 标记此模型用于生成对话标题。如果没有模型带有 "slug" 标签，将使用对话当前的模型。',
+  preserveThinking: "跨轮次保留思考",
+  preserveThinkingHint:
+    "将历史推理/思考块回传给模型，使其保留先前的思路。会消耗上下文 tokens；对于忽略该参数的服务器保持开启也无妨。",
   testButton: "测试",
   testingButton: "测试中...",
   save: "保存",

@@ -139,3 +139,88 @@ func TestCustomModelTestEndpoint(t *testing.T) {
 		t.Error("Got empty response error despite having a valid API key")
 	}
 }
+
+// TestCustomModelPreserveThinkingPersists verifies preserve_thinking round-trips
+// through the create and list custom-model HTTP handlers.
+func TestCustomModelPreserveThinkingPersists(t *testing.T) {
+	h := NewTestHarness(t)
+
+	create := CreateModelRequest{
+		DisplayName:      "local qwen",
+		ProviderType:     "openai",
+		Endpoint:         "http://localhost:1234/v1",
+		APIKey:           "sk-local",
+		ModelName:        "qwen3.6",
+		MaxTokens:        128000,
+		PreserveThinking: true,
+	}
+	body, _ := json.Marshal(create)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/custom-models", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	h.server.handleCreateModel(w, req)
+	if w.Code != http.StatusCreated {
+		t.Fatalf("create: expected 201, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var created ModelAPI
+	if err := json.Unmarshal(w.Body.Bytes(), &created); err != nil {
+		t.Fatalf("decode created: %v", err)
+	}
+	if !created.PreserveThinking {
+		t.Errorf("created model PreserveThinking=false, want true")
+	}
+
+	// List and re-verify.
+	req = httptest.NewRequest(http.MethodGet, "/api/custom-models", nil)
+	w = httptest.NewRecorder()
+	h.server.handleListModels(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("list: expected 200, got %d", w.Code)
+	}
+	var list []ModelAPI
+	if err := json.Unmarshal(w.Body.Bytes(), &list); err != nil {
+		t.Fatalf("decode list: %v", err)
+	}
+	var found *ModelAPI
+	for i := range list {
+		if list[i].ModelID == created.ModelID {
+			found = &list[i]
+			break
+		}
+	}
+	if found == nil {
+		t.Fatalf("created model not found in list")
+	}
+	if !found.PreserveThinking {
+		t.Errorf("listed model PreserveThinking=false, want true")
+	}
+
+	// Flip it off via update.
+	update := UpdateModelRequest{
+		DisplayName:      found.DisplayName,
+		ProviderType:     found.ProviderType,
+		Endpoint:         found.Endpoint,
+		APIKey:           "", // keep existing
+		ModelName:        found.ModelName,
+		MaxTokens:        found.MaxTokens,
+		Tags:             found.Tags,
+		PreserveThinking: false,
+	}
+	body, _ = json.Marshal(update)
+	req = httptest.NewRequest(http.MethodPut, "/api/custom-models/"+found.ModelID, bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w = httptest.NewRecorder()
+	h.server.handleUpdateModel(w, req, found.ModelID)
+	if w.Code != http.StatusOK {
+		t.Fatalf("update: expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	var updated ModelAPI
+	if err := json.Unmarshal(w.Body.Bytes(), &updated); err != nil {
+		t.Fatalf("decode updated: %v", err)
+	}
+	if updated.PreserveThinking {
+		t.Errorf("updated model PreserveThinking=true, want false after disabling")
+	}
+}

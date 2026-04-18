@@ -132,6 +132,9 @@ export const es: TranslationKeys = {
   tagsPlaceholder: "separadas por comas, ej., slug, cheap",
   tagsTooltip:
     'Etiquetas separadas por comas para este modelo. Use "slug" para marcar este modelo para generar títulos de conversación. Si ningún modelo tiene la etiqueta "slug", se usará el modelo de la conversación.',
+  preserveThinking: "Preservar el razonamiento entre turnos",
+  preserveThinkingHint:
+    "Reenvía los bloques de razonamiento/pensamiento anteriores para que el modelo conserve su cadena de pensamiento. Consume tokens de contexto; es seguro dejarlo activado para servidores que lo ignoran.",
   testButton: "Probar",
   testingButton: "Probando...",
   save: "Guardar",

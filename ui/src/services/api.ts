@@ -512,6 +512,7 @@ export interface CustomModel {
   model_name: string;
   max_tokens: number;
   tags: string; // Comma-separated tags (e.g., "slug" for slug generation)
+  preserve_thinking: boolean;
 }
 
 export interface CreateCustomModelRequest {
@@ -522,6 +523,7 @@ export interface CreateCustomModelRequest {
   model_name: string;
   max_tokens: number;
   tags: string; // Comma-separated tags
+  preserve_thinking: boolean;
 }
 
 export interface TestCustomModelRequest {
@@ -530,6 +532,7 @@ export interface TestCustomModelRequest {
   endpoint: string;
   api_key: string;
   model_name: string;
+  preserve_thinking: boolean;
 }
 
 class CustomModelsApi {

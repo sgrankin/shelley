@@ -648,6 +648,42 @@ func TestFromLLMRequestStripsOldThinkingBlocks(t *testing.T) {
 	}
 }
 
+func TestFromLLMRequestPreservesAllThinkingBlocks(t *testing.T) {
+	s := &Service{Model: Claude46Opus, ThinkingLevel: llm.ThinkingLevelMedium, PreserveThinking: true}
+
+	req := s.fromLLMRequest(&llm.Request{
+		Messages: []llm.Message{
+			{Role: llm.MessageRoleUser, Content: []llm.Content{
+				{Type: llm.ContentTypeText, Text: "first question"},
+			}},
+			{Role: llm.MessageRoleAssistant, Content: []llm.Content{
+				{Type: llm.ContentTypeThinking, Thinking: "old thinking", Signature: "old-sig-1"},
+				{Type: llm.ContentTypeText, Text: "first answer"},
+			}},
+			{Role: llm.MessageRoleUser, Content: []llm.Content{
+				{Type: llm.ContentTypeText, Text: "second question"},
+			}},
+			{Role: llm.MessageRoleAssistant, Content: []llm.Content{
+				{Type: llm.ContentTypeThinking, Thinking: "latest thinking", Signature: "valid-sig"},
+				{Type: llm.ContentTypeText, Text: "second answer"},
+			}},
+		},
+	})
+
+	// First assistant (index 1): thinking kept (2 content blocks).
+	if len(req.Messages[1].Content) != 2 {
+		t.Errorf("first assistant: expected 2 content blocks with PreserveThinking, got %d", len(req.Messages[1].Content))
+	}
+	if req.Messages[1].Content[0].Type != "thinking" {
+		t.Errorf("first assistant content[0]: expected thinking preserved, got %s", req.Messages[1].Content[0].Type)
+	}
+
+	// Last assistant: also has thinking, unchanged behavior.
+	if len(req.Messages[3].Content) != 2 {
+		t.Errorf("last assistant: expected 2 content blocks, got %d", len(req.Messages[3].Content))
+	}
+}
+
 func TestFromLLMRequest(t *testing.T) {
 	s := &Service{
 		Model:     Claude46Sonnet,

@@ -114,7 +114,12 @@ type Service struct {
 	Model         string            // defaults to DefaultModel if empty
 	MaxTokens     int               // 0 means use model-specific limit from modelMaxOutputTokens
 	ThinkingLevel llm.ThinkingLevel // thinking level (ThinkingLevelOff disables, default is ThinkingLevelMedium)
-	Backoff       []time.Duration   // retry backoff durations; defaults to {15s, 30s, 60s} if nil
+	// PreserveThinking keeps historical thinking blocks on prior assistant turns
+	// instead of stripping them. Anthropic validates thinking signatures, so this
+	// can fail after model-version rotation — the existing "Invalid signature"
+	// retry strips all thinking as a safety net.
+	PreserveThinking bool
+	Backoff          []time.Duration // retry backoff durations; defaults to {15s, 30s, 60s} if nil
 }
 
 var _ llm.Service = (*Service)(nil)
@@ -491,7 +496,10 @@ func (s *Service) fromLLMRequest(r *llm.Request) *request {
 		// Strip thinking/redacted_thinking blocks from all assistant messages
 		// except the last one. This avoids "Invalid signature" errors when
 		// the model version has changed since the thinking was generated.
-		if m.Role == llm.MessageRoleAssistant && i != lastAssistantIdx {
+		// When PreserveThinking is enabled, keep historical thinking too —
+		// the Invalid-signature retry (fromLLMRequestStrippingAllThinking)
+		// is still the safety net.
+		if !s.PreserveThinking && m.Role == llm.MessageRoleAssistant && i != lastAssistantIdx {
 			m = stripThinkingBlocks(m)
 		}
 		msg := fromLLMMessage(m)

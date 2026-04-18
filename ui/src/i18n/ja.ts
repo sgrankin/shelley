@@ -132,6 +132,9 @@ export const ja: TranslationKeys = {
   tagsPlaceholder: "カンマ区切り、例: slug, cheap",
   tagsTooltip:
     'このモデル用のカンマ区切りのタグ。会話タイトル生成用のモデルとしてマークするには"slug"を使用します。"slug"タグを持つモデルがない場合は、会話のモデルが使用されます。',
+  preserveThinking: "ターン間で思考を保持",
+  preserveThinkingHint:
+    "過去の推論／思考ブロックを往復させ、モデルが直前の思考の流れを保持できるようにします。コンテキストトークンを消費します。対応しないサーバーでも無害です。",
   testButton: "テスト",
   testingButton: "テスト中...",
   save: "保存",

@@ -133,6 +133,9 @@ export const fr: TranslationKeys = {
   tagsPlaceholder: "séparées par des virgules, ex : slug, cheap",
   tagsTooltip:
     "Étiquettes séparées par des virgules pour ce modèle. Utilisez « slug » pour marquer ce modèle pour la génération de titres de conversation. Si aucun modèle n'a l'étiquette « slug », le modèle de la conversation sera utilisé.",
+  preserveThinking: "Préserver la réflexion entre les tours",
+  preserveThinkingHint:
+    "Renvoie les blocs de raisonnement/réflexion précédents afin que le modèle conserve sa chaîne de pensée. Consomme des tokens de contexte ; sans danger pour les serveurs qui l'ignorent.",
   testButton: "Tester",
   testingButton: "Test en cours...",
   save: "Enregistrer",

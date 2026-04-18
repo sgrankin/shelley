@@ -132,6 +132,9 @@ export const zhTW: TranslationKeys = {
   tagsPlaceholder: "逗號分隔，例如：slug, cheap",
   tagsTooltip:
     '此模型的逗號分隔標籤。使用 "slug" 標記此模型用於產生對話標題。若沒有模型帶有 "slug" 標籤，將使用對話目前的模型。',
+  preserveThinking: "跨輪次保留思考",
+  preserveThinkingHint:
+    "將歷史推理/思考區塊回傳給模型，使其保留先前的思路。會消耗上下文 tokens；對於忽略此選項的伺服器保持開啟亦無妨。",
   testButton: "測試",
   testingButton: "測試中...",
   save: "儲存",

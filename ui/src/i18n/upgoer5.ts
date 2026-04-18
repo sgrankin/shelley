@@ -132,6 +132,9 @@ export const upgoer5: TranslationKeys = {
   tagsPlaceholder: "put a small low mark between each one, like: fast, big",
   tagsTooltip:
     "Marks for this brain, each one after the other with a small low mark between. You can use a mark to make this brain be the one that writes short names for your talks. If you do not put that mark on any brain, the brain you are using right now will make the name all on its own.",
+  preserveThinking: "Keep the thinking words from before",
+  preserveThinkingHint:
+    "Gives back the old thinking words so the brain can see what it was thinking before. It uses up more of the space to think in. If the brain does not care about it, nothing bad happens.",
   testButton: "Try It",
   testingButton: "Trying...",
   save: "Save",
