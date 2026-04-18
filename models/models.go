@@ -835,8 +835,9 @@ func (m *Manager) createServiceFromModel(model *generated.Model) llm.Service {
 			APIKey:   model.ApiKey,
 			ModelURL: model.Endpoint,
 			Model: oai.Model{
-				ModelName: model.ModelName,
-				URL:       model.Endpoint,
+				ModelName:        model.ModelName,
+				URL:              model.Endpoint,
+				PreserveThinking: true,
 			},
 			MaxTokens: int(model.MaxTokens),
 			HTTPC:     m.httpc,

@@ -1409,3 +1409,141 @@ func TestServiceDoProxyPlainText4xxError(t *testing.T) {
 		t.Errorf("expected error to contain proxy message, got: %v", err)
 	}
 }
+
+// TestPreserveThinkingRoundTrip verifies that with PreserveThinking enabled,
+// the chat_template_kwargs flag is sent, historical assistant thinking content
+// is forwarded as reasoning_content, and reasoning_content returned by the server
+// round-trips into a ContentTypeThinking block on the response.
+func TestPreserveThinkingRoundTrip(t *testing.T) {
+	type capturedReq struct {
+		ChatTemplateKwargs map[string]any    `json:"chat_template_kwargs"`
+		Messages           []json.RawMessage `json:"messages"`
+		ReasoningOnMsgs    []string          `json:"-"`
+	}
+	var got capturedReq
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&got); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		for _, rm := range got.Messages {
+			var m struct {
+				ReasoningContent string `json:"reasoning_content"`
+			}
+			_ = json.Unmarshal(rm, &m)
+			got.ReasoningOnMsgs = append(got.ReasoningOnMsgs, m.ReasoningContent)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(openai.ChatCompletionResponse{
+			ID:     "chatcmpl-pt",
+			Object: "chat.completion",
+			Model:  "qwen3.6",
+			Choices: []openai.ChatCompletionChoice{{
+				Index: 0,
+				Message: openai.ChatCompletionMessage{
+					Role:             "assistant",
+					Content:          "here is the answer",
+					ReasoningContent: "let me think step by step",
+				},
+				FinishReason: "stop",
+			}},
+		})
+	}))
+	defer server.Close()
+
+	svc := &Service{
+		APIKey: "test",
+		Model: Model{
+			ModelName:        "qwen3.6-local",
+			URL:              server.URL + "/v1",
+			PreserveThinking: true,
+		},
+		ModelURL: server.URL + "/v1",
+	}
+
+	req := &llm.Request{
+		Messages: []llm.Message{
+			{Role: llm.MessageRoleUser, Content: []llm.Content{{Type: llm.ContentTypeText, Text: "hi"}}},
+			{Role: llm.MessageRoleAssistant, Content: []llm.Content{
+				{Type: llm.ContentTypeThinking, Thinking: "prior thought"},
+				{Type: llm.ContentTypeText, Text: "prior reply"},
+			}},
+			{Role: llm.MessageRoleUser, Content: []llm.Content{{Type: llm.ContentTypeText, Text: "continue"}}},
+		},
+	}
+
+	resp, err := svc.Do(context.Background(), req)
+	if err != nil {
+		t.Fatalf("Do: %v", err)
+	}
+
+	if got.ChatTemplateKwargs["preserve_thinking"] != true {
+		t.Errorf("expected chat_template_kwargs.preserve_thinking=true, got %#v", got.ChatTemplateKwargs)
+	}
+
+	var foundPriorReasoning bool
+	for _, rc := range got.ReasoningOnMsgs {
+		if rc == "prior thought" {
+			foundPriorReasoning = true
+		}
+	}
+	if !foundPriorReasoning {
+		t.Errorf("expected assistant message to carry reasoning_content=%q, got %v", "prior thought", got.ReasoningOnMsgs)
+	}
+
+	var thinking *llm.Content
+	for i := range resp.Content {
+		if resp.Content[i].Type == llm.ContentTypeThinking {
+			thinking = &resp.Content[i]
+			break
+		}
+	}
+	if thinking == nil {
+		t.Fatalf("expected a thinking block in response, got: %+v", resp.Content)
+	}
+	if thinking.Thinking != "let me think step by step" {
+		t.Errorf("thinking.Thinking = %q, want %q", thinking.Thinking, "let me think step by step")
+	}
+}
+
+// TestPreserveThinkingDisabled verifies the flag does NOT appear when PreserveThinking is false.
+func TestPreserveThinkingDisabled(t *testing.T) {
+	var gotKwargs map[string]any
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			ChatTemplateKwargs map[string]any `json:"chat_template_kwargs"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decode: %v", err)
+		}
+		gotKwargs = body.ChatTemplateKwargs
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(openai.ChatCompletionResponse{
+			ID:     "x",
+			Object: "chat.completion",
+			Model:  "x",
+			Choices: []openai.ChatCompletionChoice{{
+				Index:        0,
+				Message:      openai.ChatCompletionMessage{Role: "assistant", Content: "ok"},
+				FinishReason: "stop",
+			}},
+		})
+	}))
+	defer server.Close()
+
+	svc := &Service{
+		APIKey:   "test",
+		Model:    Model{ModelName: "foo", URL: server.URL + "/v1"},
+		ModelURL: server.URL + "/v1",
+	}
+	req := &llm.Request{Messages: []llm.Message{{
+		Role:    llm.MessageRoleUser,
+		Content: []llm.Content{{Type: llm.ContentTypeText, Text: "hi"}},
+	}}}
+
+	if _, err := svc.Do(context.Background(), req); err != nil {
+		t.Fatalf("Do: %v", err)
+	}
+	if gotKwargs != nil {
+		t.Errorf("expected no chat_template_kwargs, got %#v", gotKwargs)
+	}
+}

@@ -359,8 +359,9 @@ func (s *Server) handleTestModel(w http.ResponseWriter, r *http.Request) {
 			APIKey:   req.APIKey,
 			ModelURL: req.Endpoint,
 			Model: oai.Model{
-				ModelName: req.ModelName,
-				URL:       req.Endpoint,
+				ModelName:        req.ModelName,
+				URL:              req.Endpoint,
+				PreserveThinking: true,
 			},
 		}
 	case "gemini":

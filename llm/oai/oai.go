@@ -45,6 +45,12 @@ type Model struct {
 	APIKeyEnv          string // environment variable name for the API key
 	IsReasoningModel   bool   // whether this model is a reasoning model (e.g. O3, O4-mini)
 	UseSimplifiedPatch bool   // whether to use the simplified patch input schema; defaults to false
+	// PreserveThinking sends chat_template_kwargs.preserve_thinking=true so servers that
+	// honor it (Qwen3.6 and friends) retain thinking traces across turns. Safe to enable
+	// for any server — templates that don't know the kwarg just ignore it. We always
+	// round-trip reasoning_content regardless of this flag.
+	// https://huggingface.co/Qwen/Qwen3.6-35B-A3B#preserve-thinking
+	PreserveThinking bool
 }
 
 var (
@@ -517,8 +523,25 @@ func fromLLMMessage(msg llm.Message) []openai.ChatCompletionMessage {
 		// For assistant messages that contain tool calls
 		var toolCalls []openai.ToolCall
 		var textContent string
+		var thinkingContent string
 
 		for _, c := range regularContent {
+			switch c.Type {
+			case llm.ContentTypeThinking, llm.ContentTypeRedactedThinking:
+				// Prefer the Thinking field; fall back to Text for providers that use it.
+				t := c.Thinking
+				if t == "" {
+					t = c.Text
+				}
+				if t == "" {
+					continue
+				}
+				if thinkingContent != "" {
+					thinkingContent += "\n"
+				}
+				thinkingContent += t
+				continue
+			}
 			content, tools := fromLLMContent(c)
 			if len(tools) > 0 {
 				toolCalls = append(toolCalls, tools...)
@@ -531,6 +554,7 @@ func fromLLMMessage(msg llm.Message) []openai.ChatCompletionMessage {
 		}
 
 		m.Content = textContent
+		m.ReasoningContent = thinkingContent
 		m.ToolCalls = toolCalls
 
 		messages = append(messages, m)
@@ -642,6 +666,14 @@ func toLLMContents(msg openai.ChatCompletionMessage) []llm.Content {
 	// If this is a tool response, handle it separately
 	if msg.Role == "tool" && msg.ToolCallID != "" {
 		return []llm.Content{toToolResultLLMContent(msg)}
+	}
+
+	// Thinking comes first so downstream UI shows it before text.
+	if msg.ReasoningContent != "" {
+		contents = append(contents, llm.Content{
+			Type:     llm.ContentTypeThinking,
+			Thinking: msg.ReasoningContent,
+		})
 	}
 
 	// If there's text content, add it
@@ -815,6 +847,9 @@ func (s *Service) Do(ctx context.Context, ir *llm.Request) (*llm.Response, error
 		Tools:               tools,
 		ToolChoice:          fromLLMToolChoice(ir.ToolChoice), // TODO: make fromLLMToolChoice return an error when a perfect translation is not possible
 		MaxCompletionTokens: cmp.Or(s.MaxTokens, DefaultMaxTokens),
+	}
+	if model.PreserveThinking {
+		req.ChatTemplateKwargs = map[string]any{"preserve_thinking": true}
 	}
 	// Construct the full URL for logging and debugging
 	fullURL := baseURL + "/chat/completions"
