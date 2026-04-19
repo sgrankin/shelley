@@ -59,8 +59,9 @@ type responsesInputItem struct {
 }
 
 type responsesContent struct {
-	Type string `json:"type"` // "input_text", "output_text"
-	Text string `json:"text"`
+	Type     string `json:"type"`                // "input_text", "output_text", "input_image"
+	Text     string `json:"text,omitempty"`      // for input_text, output_text
+	ImageURL string `json:"image_url,omitempty"` // for input_image (data URL or remote URL)
 }
 
 type responsesTool struct {
@@ -134,9 +135,16 @@ func fromLLMMessageResponses(msg llm.Message) []responsesInputItem {
 
 	// Process tool results first - they need to come before the assistant message
 	for _, tr := range toolResults {
-		// Collect all text from content objects
 		var texts []string
+		var imageParts []responsesContent
 		for _, result := range tr.ToolResult {
+			if result.MediaType != "" && result.Data != "" {
+				imageParts = append(imageParts, responsesContent{
+					Type:     "input_image",
+					ImageURL: imageDataURL(result.MediaType, result.Data),
+				})
+				continue
+			}
 			if strings.TrimSpace(result.Text) != "" {
 				texts = append(texts, result.Text)
 			}
@@ -152,11 +160,23 @@ func fromLLMMessageResponses(msg llm.Message) []responsesInputItem {
 			}
 		}
 
+		// The Responses API function_call_output.output is a string. Image
+		// parts from the tool result are emitted as a follow-up user message.
+		if len(imageParts) > 0 && toolResultContent == "" {
+			toolResultContent = "[image in following user message]"
+		}
 		items = append(items, responsesInputItem{
 			Type:   "function_call_output",
 			CallID: tr.ToolUseID,
 			Output: cmp.Or(toolResultContent, " "),
 		})
+		if len(imageParts) > 0 {
+			items = append(items, responsesInputItem{
+				Type:    "message",
+				Role:    "user",
+				Content: imageParts,
+			})
+		}
 	}
 
 	// Process regular content
@@ -167,7 +187,12 @@ func fromLLMMessageResponses(msg llm.Message) []responsesInputItem {
 		for _, c := range regularContent {
 			switch c.Type {
 			case llm.ContentTypeText:
-				if c.Text != "" {
+				if c.MediaType != "" && c.Data != "" {
+					messageContent = append(messageContent, responsesContent{
+						Type:     "input_image",
+						ImageURL: imageDataURL(c.MediaType, c.Data),
+					})
+				} else if c.Text != "" {
 					contentType := "input_text"
 					if msg.Role == llm.MessageRoleAssistant {
 						contentType = "output_text"
